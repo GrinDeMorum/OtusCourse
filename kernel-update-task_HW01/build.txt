@@ -1,0 +1,17 @@
+2023/07/14 00:04:09 [INFO] Packer version: 1.6.6 [go1.19.8 linux amd64]
+2023/07/14 00:04:09 Checking 'PACKER_CONFIG' for a config file path
+2023/07/14 00:04:09 'PACKER_CONFIG' not set; checking the default config file path
+2023/07/14 00:04:09 Attempting to open config file: /home/user/.packerconfig
+2023/07/14 00:04:09 [WARN] Config file doesn't exist: /home/user/.packerconfig
+2023/07/14 00:04:09 Setting cache directory: /home/user/Desktop/Vagrant_Projects/kernel-update-task/packer/packer_cache
+
+A config file must be suffixed with `.pkr.hcl` or `.pkr.json`. A folder can be
+referenced.
+
+Error: Could not find any config file in .
+
+A config file must be suffixed with `.pkr.hcl` or `.pkr.json`. A folder can be
+2023/07/14 00:04:09 waiting for all plugin processes to complete...
+referenced.
+
+
