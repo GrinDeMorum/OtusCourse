@@ -14,6 +14,7 @@
 **Создадим на нем файловую систему и смонтируем его, чтобы перенести туда данные:**
 
 [root@otuslinux vagrant]# mkfs.xfs /dev/vg_root/lv_root
+```
 meta-data=/dev/vg_root/lv_root   isize=512    agcount=4, agsize=786176 blks
          =                       sectsz=512   attr=2, projid32bit=1
          =                       crc=1        finobt=0, sparse=0
@@ -23,6 +24,7 @@ naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
 log      =internal log           bsize=4096   blocks=2560, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
+```
 
 [root@otuslinux vagrant]# mkdir /mnt/temp_root
 
@@ -31,7 +33,7 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 **Этой командой скопируем все данные с / раздела в /mnt:**
 
 [root@otuslinux vagrant]# xfsdump -J - /dev/VolGroup00/LogVol00 | xfsrestore -J - /mnt/temp_root
-
+```
 xfsdump: using file dump (drive_simple) strategy
 xfsdump: version 3.1.7 (dump format 3.0)
 xfsdump: level 0 dump of otuslinux:/
@@ -74,28 +76,33 @@ xfsdump: dump complete: 36 seconds elapsed
 xfsdump: Dump Status: SUCCESS
 xfsrestore: restore complete: 36 seconds elapsed
 xfsrestore: Restore Status: SUCCESS
-
+```
 
 [root@otuslinux vagrant]# ls /mnt/temp_root/
 
 bin  boot  data-snap  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  vagrant  var
 
-**Затем переконфигурируем grub длā того, чтобý при старте перейти в новýй /
-Сýмитируем текущий root -> сделаем в него chroot и обновим grub:**
+**Затем переконфигурируем grub длā того, чтобы при старте перейти в новый /
+Сымитируем текущий root -> сделаем в него chroot и обновим grub:**
 
 [root@otuslinux vagrant]# for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/temp_root/$i; done
 
 [root@otuslinux vagrant]# chroot /mnt/temp_root/
 
 [root@otuslinux /]# grub2-mkconfig -o /boot/grub2/grub.cfg
+```
 Generating grub configuration file ...
 Found linux image: /boot/vmlinuz-3.10.0-862.2.3.el7.x86_64
 Found initrd image: /boot/initramfs-3.10.0-862.2.3.el7.x86_64.img
 done
+```
 
+```
 [root@otuslinux /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i|sed "s/initramfs-//g;
 > s/.img//g"` --force; done
+```
 
+```
 Executing: /sbin/dracut -v initramfs-3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
 dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
 dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
@@ -151,8 +158,9 @@ Skipping udev rule: 91-permissions.rules
 *** Creating image file ***
 *** Creating image file done ***
 *** Creating initramfs image file '/boot/initramfs-3.10.0-862.2.3.el7.x86_64.img' done ***
+```
 
-**Ну и длā того, чтобý при загрузке бýл смонтирован нужнý root нужно в файле
+**Ну и длā того, чтобы при загрузке был смонтирован нужно root нужно в файле
 /boot/grub2/grub.cfg заменитþ rd.lvm.lv=VolGroup00/LogVol00 на rd.lvm.lv=vg_root/lv_root**
 
 [root@otuslinux boot]# sed -i 's+rd.lvm.lv=VolGroup00/LogVol00+rd.lvm.lv=vg_root/lv_root+g' /boot/grub2/grub.cfg
@@ -162,6 +170,7 @@ Skipping udev rule: 91-permissions.rules
 
 [vagrant@otuslinux ~]$ lsblk
 
+```
 NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
 sda                       8:0    0   40G  0 disk
 ├─sda1                    8:1    0    1M  0 part
@@ -174,6 +183,7 @@ sdb                       8:16   0   18G  0 disk
 sdc                       8:32   0    2G  0 disk
 sdd                       8:48   0    1G  0 disk
 sde                       8:64   0    1G  0 disk
+```
 
 **Теперь нам нужно изменить размер старой VG и вернуть на него рут. Длā этого удаляем
 старый LV размеров в 40G и создаем новый на 18G:**
@@ -181,17 +191,23 @@ sde                       8:64   0    1G  0 disk
 [vagrant@otuslinux ~]$ sudo su
 
 [root@otuslinux vagrant]# lvremove /dev/VolGroup00/LogVol00
+```
 Do you really want to remove active logical volume VolGroup00/LogVol00? [y/n]: y
   Logical volume "LogVol00" successfully removed
+```
 
 [root@otuslinux vagrant]# lvcreate -n VolGroup00/LogVol00 -L 18G /dev/VolGroup00
+
+```
 WARNING: xfs signature detected on /dev/VolGroup00/LogVol00 at offset 0. Wipe it? [y/n]: y
   Wiping xfs signature on /dev/VolGroup00/LogVol00.
   Logical volume "LogVol00" created.
+```
 
 **Проделываем на нем те же операции, что и в первый раз:**
 
 [root@otuslinux vagrant]# mkfs.xfs /dev/VolGroup00/LogVol00
+```
 meta-data=/dev/VolGroup00/LogVol00 isize=512    agcount=4, agsize=1179648 blks
          =                       sectsz=512   attr=2, projid32bit=1
          =                       crc=1        finobt=0, sparse=0
@@ -201,11 +217,12 @@ naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
 log      =internal log           bsize=4096   blocks=2560, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
+```
 
 [root@otuslinux vagrant]# mount /dev/VolGroup00/LogVol00 /mnt/temp_root/
 
 [root@otuslinux vagrant]# xfsdump -J - /dev/vg_root/lv_root | xfsrestore -J - /mnt/temp_root/
-
+```
 xfsrestore: using file dump (drive_simple) strategy
 xfsrestore: version 3.1.7 (dump format 3.0)
 xfsdump: using file dump (drive_simple) strategy
@@ -248,24 +265,28 @@ xfsdump: dump complete: 45 seconds elapsed
 xfsdump: Dump Status: SUCCESS
 xfsrestore: restore complete: 45 seconds elapsed
 xfsrestore: Restore Status: SUCCESS
+```
 
-
-**Так же как в первýй раз переконфигурируем grub, за исклĀчением правки /etc/grub2/grub.cfg**
+**Так же как в первый раз переконфигурируем grub, за исключением правки /etc/grub2/grub.cfg**
 
 [root@otuslinux vagrant]# for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/temp_root/$i; done
 
 [root@otuslinux vagrant]# chroot /mnt/temp_root/
 
 [root@otuslinux /]# grub2-mkconfig -o /boot/grub2/grub.cfg
-
+```
 Generating grub configuration file ...
 Found linux image: /boot/vmlinuz-3.10.0-862.2.3.el7.x86_64
 Found initrd image: /boot/initramfs-3.10.0-862.2.3.el7.x86_64.img
 done
+```
 
+```
 [root@otuslinux /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i|sed "s/initramfs-//g;
 > s/.img//g"` --force; done
+```
 
+```
 Executing: /sbin/dracut -v initramfs-3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
 dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
 dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
@@ -321,6 +342,7 @@ Skipping udev rule: 91-permissions.rules
 *** Creating image file ***
 *** Creating image file done ***
 *** Creating initramfs image file '/boot/initramfs-3.10.0-862.2.3.el7.x86_64.img' done ***
+```
 
 **Пока не перезагружаемся и не выходим из под chroot - мы можем заодно перенести /var**
 
@@ -342,6 +364,7 @@ Skipping udev rule: 91-permissions.rules
 **Создаем на нем ФС и перемещаем туда /var:**
 
 [root@otuslinux boot]# mkfs.btrfs /dev/vg_var/lv_var
+```
 btrfs-progs v4.9.1
 See http://btrfs.wiki.kernel.org for more information.
 
@@ -360,6 +383,7 @@ Number of devices:  1
 Devices:
    ID        SIZE  PATH
     1   952.00MiB  /dev/vg_var/lv_var
+```
 
 [root@otuslinux boot]# mkdir /mnt/temp_var && mount /dev/vg_var/lv_var /mnt/temp_var
 
@@ -382,13 +406,13 @@ umount: /mnt/temp_v: mountpoint not found
 
 [root@otuslinux boot]# echo "`blkid | grep var: | awk '{print $2}'` /var btrfs defaults 0 0" >> /etc/fstab
 
-**После чего можно успешно перезагружатþсā в новýй (уменþшеннýй root) и удалāтþ
-временнуĀ Volume Group:**
+**После чего можно успешно перезагружаться в новый (уменьшенный root) и удалить
+временную Volume Group:**
 
 Last login: Fri Aug 11 04:11:43 2023 from 10.0.2.2
 [vagrant@otuslinux ~]$ sudo su
 [root@otuslinux vagrant]# df -h
-
+```
 Filesystem                       Size  Used Avail Use% Mounted on
 /dev/mapper/VolGroup00-LogVol00   18G   17G  1.2G  94% /
 devtmpfs                         488M     0  488M   0% /dev
@@ -397,6 +421,8 @@ tmpfs                            496M  6.7M  490M   2% /run
 tmpfs                            496M     0  496M   0% /sys/fs/cgroup
 /dev/sda2                       1014M   61M  954M   6% /boot
 /dev/mapper/vg_var-lv_var        952M  254M  607M  30% /var
+```
+
 [root@otuslinux vagrant]# lvremove /dev/vg_root/lv_root
 Do you really want to remove active logical volume vg_root/lv_root? [y/n]: y
   Logical volume "lv_root" successfully removed
@@ -414,6 +440,7 @@ Do you really want to remove active logical volume vg_root/lv_root? [y/n]: y
 [root@otuslinux vagrant]# lvcreate -n LogVol_Home -L 5G /dev/VolGroup00
   Logical volume "LogVol_Home" created.
 [root@otuslinux vagrant]# mkfs.xfs /dev/VolGroup00/LogVol_Home
+```
 meta-data=/dev/VolGroup00/LogVol_Home isize=512    agcount=4, agsize=327680 blks
          =                       sectsz=512   attr=2, projid32bit=1
          =                       crc=1        finobt=0, sparse=0
@@ -423,6 +450,8 @@ naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
 log      =internal log           bsize=4096   blocks=2560, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
+```
+
 [root@otuslinux vagrant]# mount /dev/VolGroup00/LogVol_Home /mnt/
 [root@otuslinux vagrant]# cp -aR /home/* /mnt/
 [root@otuslinux vagrant]# rm -rf /home/*
@@ -431,7 +460,7 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 
 **Правим fstab для автоматического монтирования /home**
 
-[root@otuslinux vagrant]# echo "`blkid | grep Home | awk '{print $2}'` /home xfs defaults 0 0" >> /etc/fstab
+[root@otuslinux vagrant]# ```echo "`blkid | grep Home | awk '{print $2}'` /home xfs defaults 0 0" >> /etc/fstab```
 
 **Сгенерируем файлы в /home/:**
 
