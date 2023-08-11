@@ -1,6 +1,6 @@
-#Уменьшить том под / до 8G
+# Уменьшить том под / до 8G
 
-**Подготовим временнýй том длā / раздела:**
+**Подготовим временный том для / раздела:**
 
 [root@otuslinux vagrant]# pvcreate /dev/sdb
   Physical volume "/dev/sdb" successfully created.
@@ -31,6 +31,7 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 **Этой командой скопируем все данные с / раздела в /mnt:**
 
 [root@otuslinux vagrant]# xfsdump -J - /dev/VolGroup00/LogVol00 | xfsrestore -J - /mnt/temp_root
+
 xfsdump: using file dump (drive_simple) strategy
 xfsdump: version 3.1.7 (dump format 3.0)
 xfsdump: level 0 dump of otuslinux:/
@@ -76,6 +77,7 @@ xfsrestore: Restore Status: SUCCESS
 
 
 [root@otuslinux vagrant]# ls /mnt/temp_root/
+
 bin  boot  data-snap  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  vagrant  var
 
 **Затем переконфигурируем grub длā того, чтобý при старте перейти в новýй /
@@ -93,6 +95,7 @@ done
 
 [root@otuslinux /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i|sed "s/initramfs-//g;
 > s/.img//g"` --force; done
+
 Executing: /sbin/dracut -v initramfs-3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
 dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
 dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
@@ -158,6 +161,7 @@ Skipping udev rule: 91-permissions.rules
 **Перезагружаемся успешно с новым рут томом**
 
 [vagrant@otuslinux ~]$ lsblk
+
 NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
 sda                       8:0    0   40G  0 disk
 ├─sda1                    8:1    0    1M  0 part
@@ -175,6 +179,7 @@ sde                       8:64   0    1G  0 disk
 старый LV размеров в 40G и создаем новый на 18G:**
 
 [vagrant@otuslinux ~]$ sudo su
+
 [root@otuslinux vagrant]# lvremove /dev/VolGroup00/LogVol00
 Do you really want to remove active logical volume VolGroup00/LogVol00? [y/n]: y
   Logical volume "LogVol00" successfully removed
@@ -200,6 +205,7 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 [root@otuslinux vagrant]# mount /dev/VolGroup00/LogVol00 /mnt/temp_root/
 
 [root@otuslinux vagrant]# xfsdump -J - /dev/vg_root/lv_root | xfsrestore -J - /mnt/temp_root/
+
 xfsrestore: using file dump (drive_simple) strategy
 xfsrestore: version 3.1.7 (dump format 3.0)
 xfsdump: using file dump (drive_simple) strategy
@@ -251,6 +257,7 @@ xfsrestore: Restore Status: SUCCESS
 [root@otuslinux vagrant]# chroot /mnt/temp_root/
 
 [root@otuslinux /]# grub2-mkconfig -o /boot/grub2/grub.cfg
+
 Generating grub configuration file ...
 Found linux image: /boot/vmlinuz-3.10.0-862.2.3.el7.x86_64
 Found initrd image: /boot/initramfs-3.10.0-862.2.3.el7.x86_64.img
@@ -258,6 +265,7 @@ done
 
 [root@otuslinux /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i|sed "s/initramfs-//g;
 > s/.img//g"` --force; done
+
 Executing: /sbin/dracut -v initramfs-3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
 dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
 dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
@@ -316,9 +324,9 @@ Skipping udev rule: 91-permissions.rules
 
 **Пока не перезагружаемся и не выходим из под chroot - мы можем заодно перенести /var**
 
-#Выделить том под /var в зеркало
+# Выделить том под /var в зеркало
 
-**На свободнýх дисках создаем зеркало:**
+**На свободных дисках создаем зеркало:**
 
 [root@otuslinux boot]# pvcreate /dev/sdd /dev/sde
   Physical volume "/dev/sdd" successfully created.
@@ -399,9 +407,9 @@ Do you really want to remove active logical volume vg_root/lv_root? [y/n]: y
 [root@otuslinux vagrant]# pvremove /dev/sdb
   Labels on physical volume "/dev/sdb" successfully wiped.
 
-#Выделить том под /home
+# Выделить том под /home
 
-**Вýделāем том под /home по тому же принципу что делали длā /var:**
+**Выделяем том под /home по тому же принципу что делали для /var:**
 
 [root@otuslinux vagrant]# lvcreate -n LogVol_Home -L 5G /dev/VolGroup00
   Logical volume "LogVol_Home" created.
@@ -421,24 +429,24 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 [root@otuslinux vagrant]# umount /mnt
 [root@otuslinux vagrant]# mount /dev/VolGroup00/LogVol_Home /home/
 
-**Правим fstab длā автоматического монтированиā /home**
+**Правим fstab для автоматического монтирования /home**
 
 [root@otuslinux vagrant]# echo "`blkid | grep Home | awk '{print $2}'` /home xfs defaults 0 0" >> /etc/fstab
 
-**Сгенерируем файлý в /home/:**
+**Сгенерируем файлы в /home/:**
 
 [root@otuslinux vagrant]# touch /home/file{1..20}
 
-**Снāтþ снапшот:**
+**Снять снапшот:**
 
 [root@otuslinux vagrant]# lvcreate -L 1G -s -n home_snap /dev/VolGroup00/LogVol_Home
   Logical volume "home_snap" created.
 
-**Удалитþ частþ файлов:**
+**Удалить часть файлов:**
 
 rm -f /home/file{11..20}
 
-**Процесс восстановлениā со снапшота:**
+**Процесс восстановления со снапшота:**
 
 [root@otuslinux vagrant]# umount /home
 
